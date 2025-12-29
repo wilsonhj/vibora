@@ -1,6 +1,7 @@
 {
   "title": "Repositories",
   "total": "{{count}} total",
+  "searchPlaceholder": "Search repositories...",
   "newTask": "New Task",
   "viewTasks": "Tasks",
   "terminal": "Terminal",
@@ -73,7 +74,9 @@
         "projectName": "Project Name",
         "outputDirectory": "Output Directory",
         "selectDirectory": "Select directory...",
-        "willCreate": "Will create"
+        "willCreate": "Will create",
+        "trustTemplate": "Trust this template",
+        "trustWarning": "This template runs code during project creation. Only enable if you trust the source."
       },
       "creating": {
         "description": "Creating your project...",
@@ -100,7 +103,8 @@
     "addSelected": "Add {{count}} selected"
   },
   "empty": {
-    "noRepositories": "No repositories added yet. Add a repository for quick access when creating tasks."
+    "noRepositories": "No repositories added yet. Add a repository for quick access when creating tasks.",
+    "noMatches": "No repositories match your search."
   },
   "error": {
     "failedToLoad": "Failed to load repositories: {{message}}"

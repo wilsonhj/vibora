@@ -651,6 +651,7 @@ app.post('/merge-to-main', async (c) => {
       const squashMessage = commitMessages.trim() || `Merge branch '${worktreeBranch}'`
 
       // Attempt the squash merge (git hooks will handle pushing to origin)
+      const squashMsgPath = path.join(repoPath, '.git', 'SQUASH_MSG')
       try {
         gitExec(repoPath, `merge --squash ${worktreeBranch}`)
         // Use a temp file for the commit message to handle special characters
@@ -660,8 +661,16 @@ app.post('/merge-to-main', async (c) => {
           gitExec(repoPath, `commit -F "${tempFile}"`)
         } finally {
           fs.unlinkSync(tempFile)
+          // Clean up git's SQUASH_MSG file if it exists
+          if (fs.existsSync(squashMsgPath)) {
+            fs.unlinkSync(squashMsgPath)
+          }
         }
       } catch (mergeErr) {
+        // Always clean up SQUASH_MSG on failure to prevent pre-commit hook issues
+        if (fs.existsSync(squashMsgPath)) {
+          fs.unlinkSync(squashMsgPath)
+        }
         // Check if it's a merge conflict
         try {
           const mergeStatus = gitExec(repoPath, 'status')
@@ -920,6 +929,35 @@ app.post('/sync-parent', async (c) => {
     }
   } catch (err) {
     return c.json({ error: err instanceof Error ? err.message : 'Failed to sync parent' }, 500)
+  }
+})
+
+// GET /api/git/remote?path=/path/to/repo - Get git remote URL
+app.get('/remote', (c) => {
+  let repoPath = c.req.query('path')
+
+  if (!repoPath) {
+    return c.json({ error: 'path parameter is required' }, 400)
+  }
+
+  // Expand ~ to home directory
+  if (repoPath.startsWith('~')) {
+    repoPath = path.join(os.homedir(), repoPath.slice(1))
+  }
+
+  repoPath = path.resolve(repoPath)
+
+  if (!fs.existsSync(repoPath)) {
+    return c.json({ error: 'Path does not exist' }, 404)
+  }
+
+  try {
+    // Get origin remote URL
+    const remoteUrl = gitExec(repoPath, 'remote get-url origin')
+    return c.json({ remoteUrl })
+  } catch {
+    // No origin remote configured
+    return c.json({ remoteUrl: null })
   }
 })
 
